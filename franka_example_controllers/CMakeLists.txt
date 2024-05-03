@@ -20,7 +20,12 @@ find_package(pluginlib REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(franka_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(franka_semantic_components REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(generate_parameter_library)
+find_package(realtime_tools REQUIRED)
+
 
 add_library(
         ${PROJECT_NAME}
@@ -31,7 +36,9 @@ add_library(
         src/joint_position_example_controller.cpp
         src/joint_velocity_example_controller.cpp
         src/cartesian_velocity_example_controller.cpp
+        src/cartesian_impedance_controller.cpp
         src/motion_generator.cpp
+        src/model_example_controller.cpp
         src/dual_joint_impedance_example_controller.cpp
         src/dual_joint_velocity_example_controller.cpp)
 target_include_directories(
@@ -47,7 +54,12 @@ ament_target_dependencies(
         pluginlib
         rclcpp
         rclcpp_lifecycle
+        franka_semantic_components 
+        realtime_tools
+        geometry_msgs
 )
+
+generate_parameter_library(franka_example_controllers_parameters src/model_example_controller_parameters.yaml)
 
 pluginlib_export_plugin_description_file(
         controller_interface franka_example_controllers.xml)
@@ -101,5 +113,8 @@ ament_export_dependencies(
         rclcpp
         rclcpp_lifecycle
         hardware_interface
+        realtime_tools
+        geometry_msgs
+        franka_semantic_components 
 )
 ament_package()

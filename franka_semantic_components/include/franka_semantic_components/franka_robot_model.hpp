@@ -110,6 +110,11 @@ class FrankaRobotModel : public semantic_components::SemanticComponentInterface<
         return robot_model->ModelBase::gravity(*robot_state, gravity_earth);
     }
 
+
+    /**
+      * get current desired torque
+      */
+    std::array<double, 7> getTauJ_d() const { return robot_state->tau_J_d; }
     // TODO: Add the override methods
 
     protected:
