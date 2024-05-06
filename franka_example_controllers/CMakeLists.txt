@@ -12,19 +12,26 @@ endif()
 
 option(CHECK_TIDY "Adds clang-tidy tests" OFF)
 
+set(THIS_PACKAGE_INCLUDE_DEPENDS
+tf2_ros
+tf2_eigen
+ament_cmake
+controller_interface 
+pluginlib 
+rclcpp_lifecycle 
+hardware_interface 
+franka_msgs 
+geometry_msgs 
+franka_semantic_components 
+generate_parameter_library
+realtime_tools
+)
+foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
+  find_package(${Dependency} REQUIRED)
+endforeach()
+
 # find dependencies
-find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(controller_interface REQUIRED)
-find_package(pluginlib REQUIRED)
-find_package(rclcpp_lifecycle REQUIRED)
-find_package(hardware_interface REQUIRED)
-find_package(franka_msgs REQUIRED)
-find_package(geometry_msgs REQUIRED)
-find_package(franka_semantic_components REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(generate_parameter_library)
-find_package(realtime_tools REQUIRED)
 
 
 add_library(
@@ -49,14 +56,7 @@ target_include_directories(
 )
 ament_target_dependencies(
         ${PROJECT_NAME}
-        controller_interface
-        hardware_interface
-        pluginlib
-        rclcpp
-        rclcpp_lifecycle
-        franka_semantic_components 
-        realtime_tools
-        geometry_msgs
+        ${THIS_PACKAGE_INCLUDE_DEPENDS}
 )
 
 generate_parameter_library(franka_example_controllers_parameters src/model_example_controller_parameters.yaml)
@@ -64,10 +64,21 @@ generate_parameter_library(franka_example_controllers_parameters src/model_examp
 pluginlib_export_plugin_description_file(
         controller_interface franka_example_controllers.xml)
 
+#run a sample online test of the CartesianImpedanceController
+add_executable (test_cartesian_imp src/test_cartesian_imp.cpp)
+target_include_directories(
+  test_cartesian_imp
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+ament_target_dependencies(test_cartesian_imp PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS})
+
+
 install(
         TARGETS
-        ${PROJECT_NAME}
-        RUNTIME DESTINATION bin
+        ${PROJECT_NAME} test_cartesian_imp
+        RUNTIME DESTINATION lib/${PROJECT_NAME}
         ARCHIVE DESTINATION lib
         LIBRARY DESTINATION lib
 )
@@ -108,13 +119,6 @@ ament_export_libraries(
         ${PROJECT_NAME}
 )
 ament_export_dependencies(
-        controller_interface
-        pluginlib
-        rclcpp
-        rclcpp_lifecycle
-        hardware_interface
-        realtime_tools
-        geometry_msgs
-        franka_semantic_components 
+        ${THIS_PACKAGE_INCLUDE_DEPENDS}
 )
 ament_package()
