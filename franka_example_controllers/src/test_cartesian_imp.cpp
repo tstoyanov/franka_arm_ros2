@@ -24,47 +24,50 @@ class TestSM : public rclcpp::Node
     TestSM()
     : Node("test_state")
     {
-      publisher_ = this->create_publisher<geometry_msgs::msg::Pose>("equilibrium_pose", 10);
+      publisher_ = this->create_publisher<geometry_msgs::msg::Pose>("/cartesian_impedance_controller/equilibrium_pose", 10);
       publisher_stamped_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("equilibrium_pose_viz", 10);
-      publisher_stiffness_ = this->create_publisher<geometry_msgs::msg::Twist>("desired_stiffness", 10);
+      publisher_stiffness_ = this->create_publisher<geometry_msgs::msg::Twist>("/cartesian_impedance_controller/desired_stiffness", 10);
       timer_ = this->create_wall_timer(
           500ms, std::bind(&TestSM::timer_callback, this));
-      
+     
+      //NOTE: controlled point is hand_tcp 
       geometry_msgs::msg::Pose current_target_pose;
-      current_target_pose.position.x = 0.2;
-      current_target_pose.position.y = -0.18;
-      current_target_pose.position.z = 0.55;
-      current_target_pose.orientation.x = -0.61;
-      current_target_pose.orientation.y = 0.75;
-      current_target_pose.orientation.z = -0.16;
-      current_target_pose.orientation.w = 0.186;
+      current_target_pose.position.x = 0.3;
+      current_target_pose.position.y = -0.01;
+      current_target_pose.position.z = 0.37;
+      current_target_pose.orientation.x = 1.0;
+      current_target_pose.orientation.y = 0.0;
+      current_target_pose.orientation.z = 0.0;
+      current_target_pose.orientation.w = 0.0;
       current_target_pose_array.push_back(current_target_pose);
 
-      current_target_pose.position.x = 0.25;
-      current_target_pose.position.y = 0.25;
-      current_target_pose.position.z = 0.45;
-      current_target_pose.orientation.x = 0.737;
-      current_target_pose.orientation.y = -0.669;
-      current_target_pose.orientation.z = 0.11;
-      current_target_pose.orientation.w = -0.10;
+      current_target_pose.position.x = 0.4;
+//      current_target_pose.position.x = 0.25;
+//      current_target_pose.position.y = 0.25;
+//      current_target_pose.position.z = 0.45;
+ //     current_target_pose.orientation.x = 0.737;
+ //     current_target_pose.orientation.y = -0.669;
+ //     current_target_pose.orientation.z = 0.11;
+//      current_target_pose.orientation.w = -0.10;
       current_target_pose_array.push_back(current_target_pose);
 
-      current_target_pose.position.x = 0.45;
-      current_target_pose.position.y = 0.0;
       current_target_pose.position.z = 0.2;
-      current_target_pose.orientation.x = -0.56;
-      current_target_pose.orientation.y = 0.81;
-      current_target_pose.orientation.z = 0.01;
-      current_target_pose.orientation.w = 0.13;
+//      current_target_pose.position.x = 0.45;
+//      current_target_pose.position.y = 0.0;
+//      current_target_pose.position.z = 0.2;
+//      current_target_pose.orientation.x = -0.56;
+//      current_target_pose.orientation.y = 0.81;
+//      current_target_pose.orientation.z = 0.01;
+//      current_target_pose.orientation.w = 0.13;
       current_target_pose_array.push_back(current_target_pose);
 
       geometry_msgs::msg::Twist t;
       t.linear.x=600;
       t.linear.y=600;
       t.linear.z=600;
-      t.angular.x=100;
-      t.angular.y=100;
-      t.angular.z=100;
+      t.angular.x=500;
+      t.angular.y=500;
+      t.angular.z=500;
       current_stiffness_array.push_back(t);
 
       t.linear.x=200;

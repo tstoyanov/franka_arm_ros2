@@ -60,6 +60,7 @@ controller_interface::return_type CartesianImpedanceController::update(
   
   std::array<double, 7> coriolis_array = franka_robot_model_->getCoriolis();
   //jacobian wrt base frame
+  //FIXME: This hardcodes control for the point between the franka gripper fingers
   std::array<double, 42> jacobian_array = 
       franka_robot_model_->getZeroJacobian(franka::Frame::kEndEffector);
   std::array<double, 16> pose_array = franka_robot_model_->getPose(franka::Frame::kEndEffector);
@@ -159,6 +160,8 @@ controller_interface::return_type CartesianImpedanceController::update(
                              (1.0 - filter_params_) * aa_orientation_d.angle();
   orientation_d_ = Eigen::Quaterniond(aa_orientation_d);
 
+  //std::cerr<<"e="<<error.transpose()<<" tau="<<tau_d.transpose()<<std::endl;
+  //std::cerr<<position_d_.transpose()<<" "<<cartesian_stiffness_.transpose()<<std::endl;
   return controller_interface::return_type::OK;
 }
 
@@ -236,24 +239,6 @@ CallbackReturn CartesianImpedanceController::on_configure(
 
   std::cerr<<"Stiffness matrix: "<<cartesian_stiffness_target_<<std::endl;
 
-  //set initial target pose to current pose
-  updateJointStates();
-  std::cerr<<"Current joint angles q="<<q_<<std::endl;
-
-  std::array<double, 16> pose_array = franka_robot_model_->getPose(franka::Frame::kEndEffector);
-  Eigen::Affine3d initial_transform(Eigen::Matrix4d::Map(pose_array.data()));
-
-  std::cerr<<"Initial equilibrium pose = "<<initial_transform.matrix()<<std::endl;
-
-  // set equilibrium point to current state
-  position_d_ = initial_transform.translation();
-  orientation_d_ = Eigen::Quaterniond(initial_transform.linear());
-  position_d_target_ = initial_transform.translation();
-  orientation_d_target_ = Eigen::Quaterniond(initial_transform.linear());
-
-  // set nullspace equilibrium configuration to initial q
-  q_d_nullspace_ = q_;
-
   //registering subscribers
   stiffness_sub_ = get_node()->create_subscription<Twist>(
     "~/desired_stiffness",
@@ -272,6 +257,7 @@ CallbackReturn CartesianImpedanceController::on_configure(
 }
 
 void CartesianImpedanceController::updateJointStates() {
+  //std::cerr<<"state interfaces are "<<state_interfaces_.size()<<" long\n";
   for (auto i = 0; i < num_joints; ++i) {
     const auto& position_interface = state_interfaces_.at(2 * i);
     const auto& velocity_interface = state_interfaces_.at(2 * i + 1);
@@ -286,10 +272,31 @@ void CartesianImpedanceController::updateJointStates() {
 
 CallbackReturn CartesianImpedanceController::on_activate(
     const rclcpp_lifecycle::State& /*previous_state*/) {
+  franka_robot_model_->assign_loaned_state_interfaces(state_interfaces_);
+  
+  //set initial target pose to current pose
+  updateJointStates();
+  std::cerr<<"Current joint angles q="<<q_<<std::endl;
+
+  //FIXME: This hardcodes control for the point between the franka gripper fingers
+  std::array<double, 16> pose_array = franka_robot_model_->getPose(franka::Frame::kEndEffector);
+  Eigen::Affine3d initial_transform(Eigen::Matrix4d::Map(pose_array.data()));
+
+  std::cerr<<"Initial equilibrium pose = "<<initial_transform.matrix()<<std::endl;
+
+  // set equilibrium point to current state
+  position_d_ = initial_transform.translation();
+  orientation_d_ = Eigen::Quaterniond(initial_transform.linear());
+  position_d_target_ = initial_transform.translation();
+  orientation_d_target_ = Eigen::Quaterniond(initial_transform.linear());
+
+  // set nullspace equilibrium configuration to initial q
+  q_d_nullspace_ = q_;
+
   initial_q_ = q_;
   start_time_ = this->get_node()->now();
   init_time_ = rclcpp::Duration(0, 0);
-  franka_robot_model_->assign_loaned_state_interfaces(state_interfaces_);
+
   return CallbackReturn::SUCCESS;
 }
 

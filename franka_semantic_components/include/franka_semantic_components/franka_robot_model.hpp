@@ -39,9 +39,11 @@ class FrankaRobotModel : public semantic_components::SemanticComponentInterface<
      *
      * @see franka::Model::pose
      */
-    std::array<double, 16> getPose(const franka::Frame& frame) const {
-        // probably due to namespace... 
-        return robot_model->ModelBase::pose(frame, *robot_state);
+    std::array<double, 16> getPose(const franka::Frame& frame) {
+      if (!initialized) {
+        initialize();
+      }
+      return robot_model->ModelBase::pose(frame, *robot_state);
     }
 
     /**
@@ -56,7 +58,10 @@ class FrankaRobotModel : public semantic_components::SemanticComponentInterface<
      *
      * @see franka::Model::bodyJacobian
      */
-    std::array<double, 42> getBodyJacobian(const franka::Frame& frame) const {
+    std::array<double, 42> getBodyJacobian(const franka::Frame& frame) {
+      if (!initialized) {
+        initialize();
+      }
         return robot_model->ModelBase::bodyJacobian(frame, *robot_state);
     }
 
@@ -72,7 +77,10 @@ class FrankaRobotModel : public semantic_components::SemanticComponentInterface<
      *
      * @see franka::Model::zeroJacobian
      */
-    std::array<double, 42> getZeroJacobian(const franka::Frame& frame) const {
+    std::array<double, 42> getZeroJacobian(const franka::Frame& frame) {
+      if (!initialized) {
+        initialize();
+      }
         return robot_model->ModelBase::zeroJacobian(frame, *robot_state);
     }
 
@@ -83,7 +91,12 @@ class FrankaRobotModel : public semantic_components::SemanticComponentInterface<
      *
      * @see franka::Model::mass
      */
-    std::array<double, 49> getMass() const { return robot_model->ModelBase::mass(*robot_state); }
+    std::array<double, 49> getMass() { 
+      if (!initialized) {
+        initialize();
+      }
+      return robot_model->ModelBase::mass(*robot_state); 
+    }
 
     /**
      * Calculates the Coriolis force vector (state-space equation) from the current robot state:
@@ -93,7 +106,12 @@ class FrankaRobotModel : public semantic_components::SemanticComponentInterface<
      *
      * @see franka::Model::coriolis
      */
-    std::array<double, 7> getCoriolis() const { return robot_model->ModelBase::coriolis(*robot_state); }
+    std::array<double, 7> getCoriolis() { 
+      if (!initialized) {
+        initialize();
+      }
+      return robot_model->ModelBase::coriolis(*robot_state); 
+    }
 
     /**
      * Calculates the gravity vector from the current robot state. Unit: \f$[Nm]\f$.
@@ -106,7 +124,10 @@ class FrankaRobotModel : public semantic_components::SemanticComponentInterface<
      * @see franka::Model::gravity
      */
     std::array<double, 7> getGravity(const std::array<double, 3>& gravity_earth = {
-                                        {0., 0., -9.81}}) const {
+                                        {0., 0., -9.81}}) {
+      if (!initialized) {
+        initialize();
+      }
         return robot_model->ModelBase::gravity(*robot_state, gravity_earth);
     }
 
@@ -114,7 +135,9 @@ class FrankaRobotModel : public semantic_components::SemanticComponentInterface<
     /**
       * get current desired torque
       */
-    std::array<double, 7> getTauJ_d() const { return robot_state->tau_J_d; }
+    std::array<double, 7> getTauJ_d() const { 
+      return robot_state->tau_J_d; 
+    }
     // TODO: Add the override methods
 
     protected:

@@ -102,6 +102,7 @@ def generate_launch_description():
                 'stdout': 'screen',
                 'stderr': 'screen',
             },
+#            prefix=['xterm -e gdb --args'],
             on_exit=Shutdown(),
         ),
         Node(

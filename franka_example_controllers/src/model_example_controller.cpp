@@ -66,12 +66,12 @@ controller_interface::CallbackReturn ModelExampleController::on_configure(
       franka_semantic_components::FrankaRobotModel(arm_id_ + "/" + k_robot_model_interface_name,
                                                    arm_id_ + "/" + k_robot_state_interface_name));
 
-  RCLCPP_DEBUG(get_node()->get_logger(), "configured successfully");
   return CallbackReturn::SUCCESS;
 }
 
 controller_interface::CallbackReturn ModelExampleController::on_activate(
     const rclcpp_lifecycle::State& /*previous_state*/) {
+  RCLCPP_DEBUG(get_node()->get_logger(), "assigning state interfaces to model");
   franka_robot_model_->assign_loaned_state_interfaces(state_interfaces_);
   return CallbackReturn::SUCCESS;
 }
