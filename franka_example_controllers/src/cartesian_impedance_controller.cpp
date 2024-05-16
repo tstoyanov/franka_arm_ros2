@@ -160,6 +160,16 @@ controller_interface::return_type CartesianImpedanceController::update(
                              (1.0 - filter_params_) * aa_orientation_d.angle();
   orientation_d_ = Eigen::Quaterniond(aa_orientation_d);
 
+  if (error_realtime_publisher_ && error_realtime_publisher_->trylock()) {
+    error_realtime_publisher_->msg_.linear.x = error(0);
+    error_realtime_publisher_->msg_.linear.y = error(1);
+    error_realtime_publisher_->msg_.linear.z = error(2);
+    error_realtime_publisher_->msg_.angular.x = error(3);
+    error_realtime_publisher_->msg_.angular.y = error(4);
+    error_realtime_publisher_->msg_.angular.z = error(5);
+    error_realtime_publisher_->unlockAndPublish();
+  }
+
   //std::cerr<<"e="<<error.transpose()<<" tau="<<tau_d.transpose()<<std::endl;
   //std::cerr<<position_d_.transpose()<<" "<<cartesian_stiffness_.transpose()<<std::endl;
   return controller_interface::return_type::OK;
@@ -253,6 +263,11 @@ CallbackReturn CartesianImpedanceController::on_configure(
       pose_buffer_.writeFromNonRT(message);
     });
 
+  error_publisher_ = get_node()->create_publisher<Twist>("~/error", rclcpp::QoS(1));
+  error_realtime_publisher_ =
+    std::make_shared<realtime_tools::RealtimePublisher<Twist> >(error_publisher_);
+
+
   return CallbackReturn::SUCCESS;
 }
 
@@ -303,6 +318,10 @@ CallbackReturn CartesianImpedanceController::on_activate(
 controller_interface::CallbackReturn CartesianImpedanceController::on_deactivate(
     const rclcpp_lifecycle::State& /*previous_state*/) {
   franka_robot_model_->release_interfaces();
+  if (error_realtime_publisher_) {
+    error_realtime_publisher_->stop();
+  }
+
   return CallbackReturn::SUCCESS;
 }
 

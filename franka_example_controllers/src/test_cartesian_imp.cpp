@@ -62,12 +62,12 @@ class TestSM : public rclcpp::Node
       current_target_pose_array.push_back(current_target_pose);
 
       geometry_msgs::msg::Twist t;
-      t.linear.x=600;
-      t.linear.y=600;
-      t.linear.z=600;
-      t.angular.x=500;
-      t.angular.y=500;
-      t.angular.z=500;
+      t.linear.x=1900;
+      t.linear.y=1900;
+      t.linear.z=1900;
+      t.angular.x=600;
+      t.angular.y=600;
+      t.angular.z=600;
       current_stiffness_array.push_back(t);
 
       t.linear.x=200;
@@ -107,7 +107,7 @@ class TestSM : public rclcpp::Node
       publisher_stamped_->publish(target_pose);
       
       std::string toFrame = "panda_link0";
-      std::string fromFrame = "panda_link7";
+      std::string fromFrame = "panda_hand_tcp";
 
       geometry_msgs::msg::TransformStamped t;
 
@@ -132,7 +132,7 @@ class TestSM : public rclcpp::Node
       //std::cerr<<"desired: "<<current_pose.matrix()<<std::endl;
       desired_pose = desired_pose.inverse()*current_pose;
       auto rot_part = Eigen::AngleAxisd(desired_pose.rotation());
-      if(desired_pose.translation().norm()< 0.05 && rot_part.angle() < 0.5) {
+      if(desired_pose.translation().norm()< 0.1 && rot_part.angle() < 0.5) {
         idx = (idx+1)%current_target_pose_array.size();
       } else {
         //std::cerr<<"diff to desired: "<<desired_pose.matrix();

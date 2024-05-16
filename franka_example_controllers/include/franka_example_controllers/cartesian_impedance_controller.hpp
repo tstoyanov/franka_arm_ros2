@@ -23,6 +23,8 @@
 #include "realtime_tools/realtime_buffer.h"
 #include <geometry_msgs/msg/twist.hpp>
 #include <geometry_msgs/msg/pose.hpp>
+#include "realtime_tools/realtime_publisher.h"
+
 
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
@@ -93,6 +95,9 @@ class CartesianImpedanceController : public controller_interface::ControllerInte
   //realtime buffers
   realtime_tools::RealtimeBuffer<Twist::SharedPtr> stiffness_buffer_;
   realtime_tools::RealtimeBuffer<Pose::SharedPtr> pose_buffer_;
+
+  rclcpp::Publisher<Twist>::SharedPtr error_publisher_;
+  realtime_tools::RealtimePublisherSharedPtr<Twist> error_realtime_publisher_;
 
 
 
