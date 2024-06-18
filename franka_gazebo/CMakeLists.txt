@@ -23,7 +23,7 @@ foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
 endforeach()
 
 install(
-  DIRECTORY urdf meshes
+  DIRECTORY urdf meshes worlds
   DESTINATION share/${PROJECT_NAME}
 )
 install(

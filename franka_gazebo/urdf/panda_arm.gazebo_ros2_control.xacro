@@ -3,7 +3,7 @@
 
   <xacro:include filename="$(find franka_gazebo)/urdf/materials.xacro" />
 
-  <xacro:macro name="panda_arm_gazebo_ros2_control" params="ns hand:='false'">
+  <xacro:macro name="panda_arm_gazebo_ros2_control" params="ns hand:='false' camera:='true'">
     <gazebo>
       <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
         <parameters>$(find franka_gazebo)/config/franka_controllers.yaml</parameters>
@@ -42,8 +42,7 @@
     <xacro:configure_joint_ref joint_name="${ns}_joint6"/>
     <xacro:configure_joint_ref joint_name="${ns}_joint7"/>
 
-    <xacro:if value="${hand == 'true'}">
-    <xacro:configure_link link_name="${ns}_link6"/>
+    <xacro:if value="${hand}">
       <xacro:configure_link link_name="${ns}_hand"/>
       <xacro:configure_link link_name="${ns}_hand_tcp"/>
       <xacro:configure_link link_name="${ns}_leftfinger"/>
@@ -66,7 +65,9 @@
             <param name="max">${max_vel}</param>
           </command_interface>
           <command_interface name="position"/>
-          <state_interface name="position"/>
+          <state_interface name="position">
+              <param name="initial_value">${initial_position}</param>
+          </state_interface>
           <state_interface name="velocity"/>
           <state_interface name="effort"/>
         </joint>
@@ -80,11 +81,83 @@
       <xacro:configure_joint joint_name="${ns}_joint6" initial_position="${pi/2}" min_vel="-2.6" max_vel="2.6"/>
       <xacro:configure_joint joint_name="${ns}_joint7" initial_position="${pi/4}" min_vel="-2.6" max_vel="2.6"/>
     
-      <xacro:if value="${hand == 'true'}">
-        <xacro:configure_joint joint_name="${ns}_finger_joint1" initial_position="0.0"/>
-        <xacro:configure_joint joint_name="${ns}_finger_joint2" initial_position="0.0"/>
+      <xacro:if value="${hand}">
+        <xacro:configure_joint joint_name="${ns}_finger_joint1" initial_position="0.0" min_vel="-1.0" max_vel="1.0"/>
+        <xacro:configure_joint joint_name="${ns}_finger_joint2" initial_position="0.0" min_vel="-1.0" max_vel="1.0"/>
       </xacro:if>
 
     </ros2_control>
+   
+    <!--set up an RGB-D camera mounted at the end effector--> 
+    <xacro:if value="${camera}">
+      <link name="${ns}_camera_link">
+        <visual>
+          <geometry>
+          <box size="0.01 0.02 0.05"/>
+          </geometry>
+        </visual>
+        <!--for simulation -->
+        <inertial>
+          <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+          <mass value="0.01"/>
+          <inertia ixx="0.0001" ixy="0.000"  ixz="0.000"  
+           iyy="0.0001" iyz="0.000"
+           izz="0.0001" />
+          </inertial>
+      </link>
+
+      <gazebo reference="${ns}_camera_link">
+        <material>Gazebo/Red</material>
+        <selfCollide>False</selfCollide>
+        <sensor type="depth" name="camera">
+          <update_rate>30</update_rate>
+          <visualize>false</visualize>
+          <camera>
+            <horizontal_fov>1.92</horizontal_fov>
+            <image>
+              <width>640</width>
+              <height>480</height>
+              <format>B8G8R8</format>
+            </image>
+            <depth_camera>
+            </depth_camera>
+            <clip>
+              <near>0.02</near>
+              <far>3</far>
+            </clip>
+            <noise>
+              <type>gaussian</type>
+              <!-- Noise is sampled independently per pixel on each frame.
+                   That pixel's noise value is added to each of its color
+                   channels, which at that point lie in the range [0,1]. -->
+              <mean>0.0</mean>
+              <stddev>0.007</stddev>
+            </noise>
+          </camera>
+          <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+            <ros>
+              <namespace>${ns}</namespace>
+
+              <!-- topics need to be prefixed with camera_name for remapping >
+              <remapping>mycamera/image_raw:=mycamera/image_demo</remapping>
+              <remapping>mycamera/depth/image_raw:=mycamera/depth_demo</remapping>
+              <remapping>mycamera/camera_info:=mycamera/raw_cam_info_demo</remapping>
+              <remapping>mycamera/depth/camera_info:=mycamera/depth_cam_info_demo</remapping>
+              <remapping>mycamera/points:=mycamera/points_demo</remapping-->
+            </ros>
+
+            <!-- frame_name>omit so it defaults to link name</frame_name-->
+
+            <min_depth>0.1</min_depth>
+            <max_depth>5</max_depth>
+          </plugin>
+        </sensor>
+      </gazebo>
+      <joint name="${ns}_camera_fixed_joint" type="fixed">
+        <origin rpy="0 ${-pi/2} ${3*pi/4}" xyz="0.05 -0.05 0.0"/>
+        <parent link="${ns}_link7"/>
+        <child link="${ns}_camera_link"/>
+      </joint>
+    </xacro:if>
   </xacro:macro>
 </robot>

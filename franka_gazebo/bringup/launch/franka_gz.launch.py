@@ -27,11 +27,12 @@ def generate_launch_description():
     # Initialize Arguments
     gui = LaunchConfiguration("gui")
 
+    franka_world = [PathJoinSubstitution([FindPackageShare("franka_gazebo"), "worlds", "franka.world"])] 
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             [PathJoinSubstitution([FindPackageShare("gazebo_ros"), "launch", "gazebo.launch.py"])]
         ),
-        launch_arguments={"gdb": "false", "pause": "false"}.items(),
+        launch_arguments={"gdb": "false", "pause": "false", "world": franka_world }.items(),
         
     )
 
@@ -62,7 +63,7 @@ def generate_launch_description():
     spawn_entity = Node(
         package="gazebo_ros",
         executable="spawn_entity.py",
-        arguments=["-topic", "robot_description", "-entity", "panda_system_position", "-z 0.05"],
+        arguments=["-topic", "robot_description", "-entity", "panda_system_position", "-z 0.01" ],
         output="screen",
     )
     robot_state_pub_node = Node(

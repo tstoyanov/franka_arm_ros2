@@ -51,11 +51,12 @@ def generate_launch_description():
     )
 
     # Gazebo
+    franka_world = [PathJoinSubstitution([FindPackageShare("franka_gazebo"), "worlds", "franka.world"])] 
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             [PathJoinSubstitution([FindPackageShare("gazebo_ros"), "launch", "gazebo.launch.py"])]
         ),
-        launch_arguments={"gdb": "false", "pause": "false"}.items(),
+        launch_arguments={"gdb": "false", "pause": "false", "world": franka_world }.items(),
         
     )
     # Get URDF via xacro
@@ -70,6 +71,7 @@ def generate_launch_description():
                     "panda_arm.urdf.xacro",
                 ]
             ),
+            ' hand:=', load_gripper,
         ]
     )
     robot_description = {"robot_description": robot_description_content}
@@ -234,7 +236,7 @@ def generate_launch_description():
 
     load_gripper_arg = DeclareLaunchArgument(
             load_gripper_parameter_name,
-            default_value='false',
+            default_value='true',
             description='Use Franka Gripper as an end-effector, otherwise, the robot is loaded '
                         'without an end-effector.')
     
