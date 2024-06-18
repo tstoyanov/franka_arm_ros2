@@ -1,8 +1,8 @@
 controller_names:
-  - panda_arm_controller
+  - joint_trajectory_controller
   - panda_gripper
 
-panda_arm_controller:
+joint_trajectory_controller:
   action_ns: follow_joint_trajectory
   type: FollowJointTrajectory
   default: true

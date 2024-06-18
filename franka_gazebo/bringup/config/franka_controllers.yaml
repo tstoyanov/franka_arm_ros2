@@ -1,6 +1,6 @@
 controller_manager:
   ros__parameters:
-    update_rate: 500  # Hz
+    update_rate: 1000  # Hz
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
@@ -25,7 +25,7 @@ joint_trajectory_controller:
       - panda_joint6
       - panda_joint7
     command_interfaces:
-      - velocity
+      - position
     state_interfaces:
       - position
       - velocity
@@ -35,13 +35,13 @@ joint_trajectory_controller:
     allow_partial_joints_goal: false # Defaults to false
 
     gains:
-      panda_joint1: { p: 0.6, d: 0.3, i: 0., i_clamp: 1., ff_velocity_scale: 1. }
-      panda_joint2: { p: 0.5, d: 0.2, i: 0., i_clamp: 1., ff_velocity_scale: 1. }
-      panda_joint3: { p: 0.5, d: 0.2, i: 0., i_clamp: 1., ff_velocity_scale: 1. }
-      panda_joint4: { p: 0.5, d: 0.2, i: 0., i_clamp: 1., ff_velocity_scale: 1. }
-      panda_joint5: { p: 0.2, d: 0.1, i: 0., i_clamp: 1., ff_velocity_scale: 1. }
-      panda_joint6: { p: 0.1, d: 0.05, i: 0., i_clamp: 1., ff_velocity_scale: 1. }
-      panda_joint7: { p: 0.05, d: 0.01, i: 0., i_clamp: 1., ff_velocity_scale: 1. }
+      panda_joint1: { p: 0.9, d: 1.4, i: 0.0, i_clamp: 0.5, ff_velocity_scale: 1.5 }
+      panda_joint2: { p: 0.9, d: 1.4, i: 0.0, i_clamp: 0.5, ff_velocity_scale: 1.5 }
+      panda_joint3: { p: 0.9, d: 1.4, i: 0.0, i_clamp: 0.5, ff_velocity_scale: 1.5 }
+      panda_joint4: { p: 0.9, d: 1.4, i: 0.0, i_clamp: 0.5, ff_velocity_scale: 1.5 }
+      panda_joint5: { p: 0.9, d: 1.4, i: 0.0, i_clamp: 0.5, ff_velocity_scale: 1.5 }
+      panda_joint6: { p: 0.9, d: 1.4, i: 0.0, i_clamp: 0.5, ff_velocity_scale: 1.5 }
+      panda_joint7: { p: 0.9, d: 1.4, i: 0.0, i_clamp: 0.5, ff_velocity_scale: 1.5 }
 
 forward_position_controller:
   ros__parameters:
