@@ -67,12 +67,15 @@ controller_interface::return_type CartesianImpedanceController::update(
   // convert to Eigen
   Eigen::Map<Eigen::Matrix<double, 7, 1>> coriolis(coriolis_array.data());
   Eigen::Map<Eigen::Matrix<double, 6, 7>> jacobian(jacobian_array.data());
-  Eigen::Map<Eigen::Matrix<double, 7, 1>> q(q_.data());
-  Eigen::Map<Eigen::Matrix<double, 7, 1>> dq(dq_.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_J_d(franka_robot_model_->getTauJ_d().data());
+  //Eigen::Map<Eigen::Matrix<double, 7, 1>> q(q_.data());
+  //Eigen::Map<Eigen::Matrix<double, 7, 1>> dq(dq_.data());
+
+  dq_filtered_ = filter_params_ * dq_ + (1-filter_params_)*dq_filtered_;
 
   Eigen::Affine3d transform(Eigen::Matrix4d::Map(pose_array.data()));
   Eigen::Vector3d position(transform.translation());
+  //NOTE .linear() returns the rotation part for an affine transform
   Eigen::Quaterniond orientation(transform.linear());
 
   // compute error to desired pose
@@ -80,7 +83,7 @@ controller_interface::return_type CartesianImpedanceController::update(
   Eigen::Matrix<double, 6, 1> error;
   error.head(3) << position - position_d_;
 
-  // orientation error
+  // orientation error, make sure the quaternion didn't flip sign
   if (orientation_d_.coeffs().dot(orientation.coeffs()) < 0.0) {
     orientation.coeffs() << -orientation.coeffs();
   }
@@ -102,20 +105,23 @@ controller_interface::return_type CartesianImpedanceController::update(
 
   // Cartesian PD control with damping ratio = 1
   tau_task << jacobian.transpose() *
-                  (-cartesian_stiffness_ * error - cartesian_damping_ * (jacobian * dq));
+                  (-cartesian_stiffness_ * error - cartesian_damping_ * (jacobian * dq_filtered_));
   // nullspace PD control with damping ratio = 1
   tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) -
                     jacobian.transpose() * jacobian_transpose_pinv) *
-                       (nullspace_stiffness_ * (q_d_nullspace_ - q) -
-                        (2.0 * sqrt(nullspace_stiffness_)) * dq);
+                       (nullspace_stiffness_ * (q_d_nullspace_ - q_) -
+                        (2.0 * sqrt(nullspace_stiffness_)) * dq_filtered_);
   // Desired torque
   tau_d << tau_task + tau_nullspace + coriolis;
   // Saturate torque rate to avoid discontinuities
-  tau_d << saturateTorqueRate(tau_d, tau_J_d);
+  tau_d << saturateTorqueRate(tau_d, tau_d_prev_);
+  //tau_d << saturateTorqueRate(tau_d, tau_J_d);
+  tau_d_prev_ = tau_d;
   for (size_t i = 0; i < 7; ++i) {
     command_interfaces_[i].set_value(tau_d(i));
   }
 
+  //std::cerr<<"task={"<<tau_task.transpose()<<"}, tau_d={"<<tau_d.transpose()<<"}\n";
   //check-update for new desired stiffness and equilibrium pose
   auto input_s{stiffness_buffer_.readFromRT()};
   if(input_s != nullptr) {
@@ -152,6 +158,8 @@ controller_interface::return_type CartesianImpedanceController::update(
   nullspace_stiffness_ =
       filter_params_ * nullspace_stiffness_target_ + (1.0 - filter_params_) * nullspace_stiffness_;
   position_d_ = filter_params_ * position_d_target_ + (1.0 - filter_params_) * position_d_;
+  orientation_d_ = orientation_d_target_;
+  /*
   Eigen::AngleAxisd aa_orientation_d(orientation_d_);
   Eigen::AngleAxisd aa_orientation_d_target(orientation_d_target_);
   aa_orientation_d.axis() = filter_params_ * aa_orientation_d_target.axis() +
@@ -159,19 +167,29 @@ controller_interface::return_type CartesianImpedanceController::update(
   aa_orientation_d.angle() = filter_params_ * aa_orientation_d_target.angle() +
                              (1.0 - filter_params_) * aa_orientation_d.angle();
   orientation_d_ = Eigen::Quaterniond(aa_orientation_d);
+  */
 
   if (error_realtime_publisher_ && error_realtime_publisher_->trylock()) {
     error_realtime_publisher_->msg_.linear.x = error(0);
     error_realtime_publisher_->msg_.linear.y = error(1);
     error_realtime_publisher_->msg_.linear.z = error(2);
-    error_realtime_publisher_->msg_.angular.x = error(3);
-    error_realtime_publisher_->msg_.angular.y = error(4);
-    error_realtime_publisher_->msg_.angular.z = error(5);
+    ////
+    error_realtime_publisher_->msg_.linear.y = coriolis(6);
+    error_realtime_publisher_->msg_.linear.z = tau_nullspace(6);
+    error_realtime_publisher_->msg_.angular.x = tau_d(6);
+    error_realtime_publisher_->msg_.angular.y = tau_J_d(6);
+    error_realtime_publisher_->msg_.angular.z = tau_task(6);
+    //error_realtime_publisher_->msg_.angular.x = error(3);
+    //error_realtime_publisher_->msg_.angular.y = error(4);
+    //error_realtime_publisher_->msg_.angular.z = error(5);
     error_realtime_publisher_->unlockAndPublish();
   }
-
-  //std::cerr<<"e="<<error.transpose()<<" tau="<<tau_d.transpose()<<std::endl;
-  //std::cerr<<position_d_.transpose()<<" "<<cartesian_stiffness_.transpose()<<std::endl;
+/*
+  std::cerr<<"e="<<error.transpose()<<"\ntau="<<tau_d.transpose()<<std::endl;
+  std::cerr<<"tau_null="<<tau_nullspace.transpose()<<"\ntau_task="<<tau_task.transpose()<<std::endl;
+  std::cerr<<"tau_d_prev="<<tau_d_prev_.transpose()<<"\n coriolis="<<coriolis.transpose()<<std::endl;
+  std::cerr<<"p="<<position_d_.transpose()<<" o="<<orientation_d_<<" \n s="<<cartesian_stiffness_.transpose()<<std::endl;
+  */
   return controller_interface::return_type::OK;
 }
 
@@ -295,6 +313,7 @@ CallbackReturn CartesianImpedanceController::on_activate(
 
   //FIXME: This hardcodes control for the point between the franka gripper fingers
   std::array<double, 16> pose_array = franka_robot_model_->getPose(franka::Frame::kEndEffector);
+  tau_d_prev_.setZero();// Vector7d(franka_robot_model_->getTauJ_d().data());
   Eigen::Affine3d initial_transform(Eigen::Matrix4d::Map(pose_array.data()));
 
   std::cerr<<"Initial equilibrium pose = "<<initial_transform.matrix()<<std::endl;
@@ -305,6 +324,7 @@ CallbackReturn CartesianImpedanceController::on_activate(
   position_d_target_ = initial_transform.translation();
   orientation_d_target_ = Eigen::Quaterniond(initial_transform.linear());
 
+  std::cerr<<"Position "<<position_d_.transpose()<<" orientation "<<orientation_d_<<std::endl;
   // set nullspace equilibrium configuration to initial q
   q_d_nullspace_ = q_;
 

@@ -65,6 +65,7 @@ class CartesianImpedanceController : public controller_interface::ControllerInte
   Vector7d initial_q_;
   Vector7d dq_;
   Vector7d dq_filtered_;
+  Vector7d tau_d_prev_;
 
   Vector6d k_gains_;
   Vector6d d_gains_;
@@ -72,9 +73,9 @@ class CartesianImpedanceController : public controller_interface::ControllerInte
   rclcpp::Duration init_time_ = rclcpp::Duration(0, 0);
   
   //impedance controller params
-  double filter_params_{0.05};
-  double nullspace_stiffness_{20.0};
-  double nullspace_stiffness_target_{20.0};
+  double filter_params_{0.01};
+  double nullspace_stiffness_{0.5};
+  double nullspace_stiffness_target_{0.5};
   const double delta_tau_max_{1.0};
   Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
   Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_;

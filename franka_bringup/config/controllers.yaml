@@ -92,19 +92,19 @@ cartesian_impedance_controller:
   ros__parameters:
     arm_id: panda
     k_gains:
-      - 900.0
-      - 900.0
-      - 900.0
-      - 400.0
-      - 400.0
-      - 400.0
+      - 0.90
+      - 0.90
+      - 0.90
+      - 0.40
+      - 0.40
+      - 0.40
     d_gains:
-      - 60.0
-      - 60.0
-      - 60.0
-      - 40.0
-      - 40.0
-      - 40.0
+      - 1.9
+      - 1.9
+      - 1.9
+      - 1.3
+      - 1.3
+      - 1.3
 
 move_to_start_example_controller:
   ros__parameters:
