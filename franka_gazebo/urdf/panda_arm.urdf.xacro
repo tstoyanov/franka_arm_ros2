@@ -1,8 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="panda">
   <xacro:arg name="arm_id" default="panda"/> <!-- Name of this panda -->
-  <xacro:arg name="hand" default="false"/> <!-- Should a franka_gripper be mounted at the flange?" -->
+  <xacro:arg name="hand" default="true"/> <!-- Should a franka_gripper be mounted at the flange?" -->
   <xacro:arg name="agx" default="false"/> <!-- Set up the AGX ros control plugin instead?" -->
+  <xacro:arg name="camera" default="true"/> <!-- Should a franka_gripper be mounted at the flange?" -->
 
   <link name="world"/>
 
@@ -16,7 +17,7 @@
 
   <xacro:if value="$(arg agx)">
     <xacro:include filename="$(find franka_gazebo)/urdf/panda_arm.agx_ros2_control.xacro"/>
-    <xacro:panda_arm_agx_ros2_control ns="$(arg arm_id)" hand="$(arg hand)"/>
+    <xacro:panda_arm_agx_ros2_control ns="$(arg arm_id)" hand="$(arg hand)" camera="$(camera)"/>
   </xacro:if>
   
   <xacro:unless value="$(arg agx)">

@@ -5,11 +5,13 @@ Franka Emika has dropped software support for robots older than FR3, which leave
 
 This repository attempts to remedy that somewhat, by bringing existing features from franka_ros over to ROS2 specifically for the Panda robots.
 
-As of 16.11.23, almost all single-robot `franka_ros` features have been migrated, including different controller interfaces, error recovery, and runtime parameter setters. Multi-arm support is also available via `franka_multi_hardware_interface`, launched via `dual_franka_launch.py`.
-
-The repo is still in active development, and I will try to address any missing features or bugs as soon as possible.
+MoveIt and simple position control work well on the real robot, but tests of torque control interface have revealed some issues.
+WIP: 
+* porting cartesian impedance controller.
+* gazebo simulation port.
 
 ## Credits
+Note: fork from port by [yilmazabdurrah][yilmazabdurrah/franka_arm_ros2].
 The original version is forked from mcbed's port of franka_ros2 for [humble][mcbed-humble].
 
 ## Working (not thoroughly tested) features
@@ -33,49 +35,17 @@ The original version is forked from mcbed's port of franka_ros2 for [humble][mcb
 * Joint position controller might cause some bad motor behaviors. Suggest using torque or velocity for now.
 
 
-## Priority list
-* <s>Publishing FrankaState</s>
-* Completely replicate the functionalities of `franka_hw`
-    * <s>Implement joint limits interface (position, velocity, effort)</s> Joint limits are not really working in ros2_control; they need to be implemented at controller level.
-    * <s>Adding different joint interfaces (joint {velocity, position}</s> and cartesian {<s>velocity</s>, pose})
-    * <s>Adding logic for switching to different joint interfaces</s>
-* <s>Adding error recovery services</s>
-    * <s>franka_ros2 crashes right away if the E-stop is pressed or a controller exception occurs.</s>
-    * <s>franka_ros2 does not start if the robot is already in error mode before the node is started.</s>
-* <s>Adding additional example controllers (Cartesian, joint velocity/position, etc. )</s>
-* <s>Add reconfiguration service for:</s>
-    * <s>Cartesian, Joint impedance</s>
-    * <s>Force torque, full collision behaviors</s>
-    * <s>EE, K frames</s>
-    * <s>Load settings</s>
-* Clean up base acceleration-dependent values in Franka State
-* <s>Clean up dependency tree for packages</s>
-* <s>Test it out with moveit! 2</s>
-    * Implement tutorials for multi-arm moveit
-    * bug fixing with SRDF/URDF not finding the `base_link` defined in the dual panda URDF
-    * Implement quality-of-life functions for moveit
-* Investigating multiple arm control
-    * <s>Initialization</s>
-    * <s>Reading joint states</s>
-    * <s>Broadcasting franka states</s>
-    * Controllers for:
-        * Joint-level stuff
-        * Cartesian-level stuff
-    * Splitting all broadcasters into its own nodes
-    * Cleaning up parametrization
-* Test out gripper
-* Make reusable impedance controllers with proper subscribers for general use
-* Add extensive tutorials!
-
 ## Installation Guide
 
 (Tested on Ubuntu 22.04, ROS2 Humble, Panda 4.2.2 & 4.2.1, and Libfranka 0.9.2)
 
 1. Build libfranka 0.9.2 from source by following the [instructions][libfranka-instructions].
 2. Clone this repository into your workspace's `src` folder.
-3. Source the workspace, then in your workspace root, call: `colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release -DFranka_DIR:PATH=/path/to/libfranka/build`
-4. Add the build path to your `LD_LIBRARY_PATH`: `LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/path/to/libfranka/build"`
-5. To test, source the workspace, and run `ros2 launch franka_bringup franka.launch.py robot_ip:=<fci-ip>`.
+3. Install dependencies: `sudo rosdep init && rosdep update && rosdep install --from-paths src -y --ignore-src`
+4. Source the workspace, then in your workspace root, call: `colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release -DFranka_DIR:PATH=/path/to/libfranka/build`
+5. Add the build path to your `LD_LIBRARY_PATH`: `LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/path/to/libfranka/build"`
+6. To test on the *real robot*, source the workspace, and run `ros2 launch franka_bringup franka.launch.py robot_ip:=<fci-ip>`.
+6. To test in simulation, run `ros2 launch franka_moveit_config moveit_gazebo.launch.py`
 
 ## License
 

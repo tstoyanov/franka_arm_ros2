@@ -176,7 +176,7 @@ def generate_launch_description():
 
     # RViz
     rviz_base = os.path.join(get_package_share_directory('franka_moveit_config'), 'rviz')
-    rviz_full_config = os.path.join(rviz_base, 'moveit.rviz')
+    rviz_full_config = os.path.join(rviz_base, 'moveit_sim.rviz')
 
     rviz_node = Node(
         package='rviz2',
