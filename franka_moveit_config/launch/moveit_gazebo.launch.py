@@ -126,6 +126,7 @@ def generate_launch_description():
                                 'default_planner_request_adapters/FixStartStatePathConstraints',
             'start_state_max_bounds_error': 0.1,
             'use_sim_time': True,
+            'publish_robot_description_semantic': True,
         }
     }
     ompl_planning_yaml = load_yaml(
@@ -156,6 +157,8 @@ def generate_launch_description():
         'publish_geometry_updates': True,
         'publish_state_updates': True,
         'publish_transforms_updates': True,
+        'publish_robot_description': True,
+        'publish_robot_description_semantic': True,
     }
 
     # Start the actual move_group node/action server
