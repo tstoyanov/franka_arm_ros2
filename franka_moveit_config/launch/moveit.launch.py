@@ -186,7 +186,7 @@ def generate_launch_description():
 
     # Load controllers
     load_controllers = []
-    for controller in ['panda_arm_controller', 'joint_state_broadcaster']:
+    for controller in ['joint_trajectory_controller', 'joint_state_broadcaster']:
         load_controllers += [
             ExecuteProcess(
                 cmd=['ros2 run controller_manager spawner {}'.format(controller)],
@@ -224,9 +224,10 @@ def generate_launch_description():
         use_fake_hardware_parameter_name,
         default_value='false',
         description='Use fake hardware')
+
     load_gripper_arg = DeclareLaunchArgument(
             load_gripper_parameter_name,
-            default_value='false',
+            default_value='true',
             description='Use Franka Gripper as an end-effector, otherwise, the robot is loaded '
                         'without an end-effector.')
     
