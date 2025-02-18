@@ -64,40 +64,42 @@ class TestSM : public rclcpp::Node
         Eigen::Affine3d current_pose = tf2::transformToEigen(Transform);
         std::cerr<<"Current robot pose\n"<<current_pose.matrix()<<std::endl;
 
-        current_pose.translation()(0) += 0.1; 
         //NOTE: controlled point is hand_tcp 
         geometry_msgs::msg::Pose current_target_pose = tf2::toMsg(current_pose);
+        current_target_pose.position.x += 0.1;
         current_target_pose_array.push_back(current_target_pose);
 
+        current_target_pose.position.x -= 0.1;
         current_target_pose.position.y -= 0.1;
         current_target_pose_array.push_back(current_target_pose);
 
+        current_target_pose.position.y += 0.1;
         current_target_pose.position.z -= 0.1;
         current_target_pose_array.push_back(current_target_pose);
 
         geometry_msgs::msg::Twist t;
         t.linear.x=600;
-        t.linear.y=100;
-        t.linear.z=100;
-        t.angular.x=60;
-        t.angular.y=60;
-        t.angular.z=60;
+        t.linear.y=600;
+        t.linear.z=600;
+        t.angular.x=0;
+        t.angular.y=0;
+        t.angular.z=0;
         current_stiffness_array.push_back(t);
 
         t.linear.x=100;
-        t.linear.y=300;
+        t.linear.y=100;
         t.linear.z=100;
-        t.angular.x=60;
-        t.angular.y=60;
-        t.angular.z=60;
+        t.angular.x=0;
+        t.angular.y=0;
+        t.angular.z=0;
        current_stiffness_array.push_back(t);
 
-        t.linear.x=100;
-        t.linear.y=100;
-        t.linear.z=200;
-        t.angular.x=60;
-        t.angular.y=60;
-        t.angular.z=60;
+        t.linear.x=1000;
+        t.linear.y=1000;
+        t.linear.z=1000;
+        t.angular.x=0;
+        t.angular.y=0;
+        t.angular.z=0;
         current_stiffness_array.push_back(t);
 
         idx=0;
@@ -131,12 +133,13 @@ class TestSM : public rclcpp::Node
       Eigen::Affine3d desired_pose; 
       tf2::fromMsg(current_target_pose_array[idx],desired_pose);
 
-      std::cerr<<"desired: "<<desired_pose.matrix()<<std::endl;
-      std::cerr<<"current: "<<current_pose.matrix()<<std::endl;
+      //std::cerr<<"desired: "<<desired_pose.matrix()<<std::endl;
+      //std::cerr<<"current: "<<current_pose.matrix()<<std::endl;
       desired_pose = desired_pose.inverse()*current_pose;
       auto rot_part = Eigen::AngleAxisd(desired_pose.rotation());
-      if(desired_pose.translation().norm()< 0.02 && rot_part.angle() < 0.15) {
+      if(desired_pose.translation().norm()< 0.01) { // && rot_part.angle() < 0.15) {
         idx = (idx+1)%current_target_pose_array.size();
+        std::cerr<<"desired pose reached, error="<<desired_pose.translation().norm()<<" moving to next\n";
       } else {
         //std::cerr<<"diff to desired: "<<desired_pose.matrix();
         std::cerr<<"\ntranslation "<<desired_pose.translation().norm() << " rot "<<rot_part.angle()<<std::endl;

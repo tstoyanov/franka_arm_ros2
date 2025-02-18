@@ -93,6 +93,7 @@ controller_interface::return_type CartesianImpedanceController::update(
   Eigen::AngleAxisd error_quaternion_angle_axis(error_quaternion);
   // compute "orientation error"
   error.tail(3) << error_quaternion_angle_axis.axis() * error_quaternion_angle_axis.angle();
+  //error.tail(3)<<0,0,0;
 
   // compute control
   // allocate variables
